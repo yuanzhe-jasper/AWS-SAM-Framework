@@ -1,26 +1,34 @@
-const AWS = require('aws-sdk'); // Use CommonJS syntax for AWS SDK v2
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 
-const s3 = new AWS.S3();
+const s3Client = new S3Client({});
 
-exports.lambdaHandler = async (event, context) => {
+export const lambdaHandler = async (event, context) => {
   try {
     console.log('Lambda function triggered!');
     console.log('Event:', JSON.stringify(event, null, 2));
 
-    // Extract bucket name and object key from the event
     const bucketName = event.Records[0].s3.bucket.name;
     const objectKey = event.Records[0].s3.object.key;
 
     console.log(`Bucket: ${bucketName}, Key: ${objectKey}`);
 
-    // Get the object from S3
     const params = {
       Bucket: bucketName,
       Key: objectKey,
     };
 
-    const data = await s3.getObject(params).promise();
-    const fileContent = data.Body.toString('utf-8');
+    const command = new GetObjectCommand(params);
+    const data = await s3Client.send(command);
+
+    const streamToString = (stream) =>
+      new Promise((resolve, reject) => {
+        const chunks = [];
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+      });
+
+    const fileContent = await streamToString(data.Body);
 
     console.log('File Content:', fileContent);
 
