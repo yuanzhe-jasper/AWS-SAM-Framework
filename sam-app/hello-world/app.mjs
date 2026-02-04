@@ -31,7 +31,7 @@ export const lambdaHandler = async (event, context) => {
     const fileContent = await streamToString(data.Body);
 
     console.log('File Content:', fileContent);
-
+    console.log('Lambda function executed successfully!');
     return {
       statusCode: 200,
       body: JSON.stringify({
