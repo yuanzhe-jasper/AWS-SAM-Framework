@@ -20,6 +20,14 @@ Resources:
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:GetObjectVersion
+              Resource: 'arn:aws:s3:::*/*'
       Events:
         HelloWorld:
           Type: Api

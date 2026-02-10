@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  final-python-thumbnail
+
+  Sample SAM Template for final-python-thumbnail
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 60
+    CodeUri: handler/
+    Runtime: python3.13
+    MemorySize: 128
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        THUMBNAIL_SIZE: 128
+        REGION: "us-west-2"
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  CreateThumbnailFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Handler: app.s3_thumbnail_generator
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: 's3:*'
+              Resource: '*'
+      Events:
+        CreateThumbnailEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref SrcBucket
+            Events: s3:ObjectCreated:*
+  SrcBucket:
+    Type: AWS::S3::Bucket
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+# Outputs:
+  # ThumbnaildApi:
+  #   Description: API Gateway endpoint URL for Prod stage for Thumbnail function
+  #   Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/images/"
+  # CreateThumbnailFunction:
+  #   Description: CreateThumbnailFunction Lambda Function ARN
+  #   Value: !GetAtt CreateThumbnailFunction.Arn
+  # HelloWorldFunctionIamRole:
+  #   Description: Implicit IAM Role created for Hello World function
+  #   Value: !GetAtt HelloWorldFunctionRole.Arn
